@@ -82,6 +82,92 @@ export const SLA_HOURS: Record<TicketPriority, number> = {
   LOW: 72,
 };
 
+// ---- ai-service ----
+
+export type AiCategory = 'IT' | 'HR' | 'FINANCE' | 'NETWORKING' | 'SECURITY';
+export type AiOutcome = 'SOLVED' | 'NEEDS_TECHNICIAN' | 'EMERGENCY';
+export type AnalysisStatus = 'RUNNING' | 'COMPLETED' | 'FAILED';
+
+export interface AiClassification {
+  category: AiCategory;
+  suggested_priority: TicketPriority;
+  confidence: number;
+  rationale: string;
+}
+
+export interface AiDocHit {
+  title: string;
+  path: string;
+  category: string;
+  heading: string;
+  snippet: string;
+  score: number;
+}
+
+export interface AiTicketHit {
+  ticketId: number;
+  title: string;
+  snippet: string;
+  status: TicketStatus;
+  score: number;
+}
+
+export interface AiTroubleshooting {
+  steps: string[];
+  self_serviceable: boolean;
+  confidence: number;
+}
+
+export interface AiEscalation {
+  outcome: AiOutcome;
+  ticket_priority: TicketPriority;
+  assignment_hint: string;
+}
+
+export interface AiExternalIssue {
+  provider: string;
+  key: string;
+  url: string;
+  summary: string;
+}
+
+export interface AiSummaries {
+  ticket_comment: string;
+  manager_summary: string;
+  resolution_notes: string;
+}
+
+export interface AnalysisResponse {
+  requestId: string;
+  channel: 'assistant' | 'ticket_event';
+  status: AnalysisStatus;
+  issueText: string;
+  userId: number;
+  ticketId: number | null;
+  classification: AiClassification | null;
+  docHits: AiDocHit[] | null;
+  ticketHits: AiTicketHit[] | null;
+  troubleshooting: AiTroubleshooting | null;
+  escalation: AiEscalation | null;
+  externalIssues: AiExternalIssue[] | null;
+  notifications: { channel: string; status: string }[] | null;
+  summaries: AiSummaries | null;
+  errors: string[] | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+/** Pipeline nodes in visual order, with UI labels. */
+export const AI_PIPELINE_STEPS: { node: string; label: string }[] = [
+  { node: 'classify', label: 'Classify the issue' },
+  { node: 'retrieve_docs', label: 'Search company docs' },
+  { node: 'retrieve_tickets', label: 'Search past tickets' },
+  { node: 'troubleshoot', label: 'Draft troubleshooting steps' },
+  { node: 'escalate', label: 'Decide on escalation' },
+  { node: 'api_agent', label: 'Act on the ticket system' },
+  { node: 'summarize', label: 'Write summaries' },
+];
+
 export function statusLabel(status: TicketStatus): string {
   return status === 'IN_PROGRESS' ? 'In progress' : status.charAt(0) + status.slice(1).toLowerCase();
 }

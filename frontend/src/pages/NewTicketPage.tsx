@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createTicket } from '../api/endpoints';
+import { analyzeTicket, createTicket } from '../api/endpoints';
 import type { TicketPriority } from '../api/types';
 import { SLA_HOURS, TICKET_PRIORITIES } from '../api/types';
 import { ErrorMessage } from '../components/feedback';
@@ -20,6 +20,8 @@ export function NewTicketPage() {
     setSubmitting(true);
     try {
       const ticket = await createTicket(title, description, priority);
+      // Fire-and-forget: background AI analysis must never block ticket creation.
+      void analyzeTicket(ticket.id).catch(() => {});
       navigate(`/tickets/${ticket.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create ticket');

@@ -18,6 +18,7 @@ import type {
 import { ALLOWED_TRANSITIONS, statusLabel } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 import { useUserDirectory } from '../auth/UserDirectoryContext';
+import { AiInsightsCard } from '../components/AiInsightsCard';
 import {
   PriorityBadge,
   SlaIndicator,
@@ -221,6 +222,8 @@ export function TicketDetailPage() {
               <dd>{formatDateTime(ticket.updatedAt)}</dd>
             </dl>
           </section>
+
+          <AiInsightsCard ticketId={ticket.id} />
 
           {isAgent && (
             <section className="card">

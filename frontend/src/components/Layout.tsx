@@ -24,6 +24,7 @@ export function Layout() {
             Tickets
           </NavLink>
           <NavLink to="/tickets/new">New ticket</NavLink>
+          <NavLink to="/assist">Get help</NavLink>
           {isAgent && <NavLink to="/reports">Reports</NavLink>}
           {isAgent && <NavLink to="/users">Users</NavLink>}
         </nav>

@@ -1,5 +1,6 @@
 const AUTH_API = import.meta.env.VITE_AUTH_API_URL ?? 'http://localhost:8081';
 const TICKET_API = import.meta.env.VITE_TICKET_API_URL ?? 'http://localhost:8082';
+export const AI_API = import.meta.env.VITE_AI_API_URL ?? 'http://localhost:8083';
 
 const TOKEN_KEY = 'helpdesk.token';
 
@@ -96,4 +97,13 @@ export const ticketApi = {
     request<T>(TICKET_API, path, { method: 'POST', body: JSON.stringify(body) }),
   patch: <T>(path: string, body: unknown) =>
     request<T>(TICKET_API, path, { method: 'PATCH', body: JSON.stringify(body) }),
+};
+
+export const aiApi = {
+  get: <T>(path: string) => request<T>(AI_API, path),
+  post: <T>(path: string, body?: unknown) =>
+    request<T>(AI_API, path, {
+      method: 'POST',
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    }),
 };

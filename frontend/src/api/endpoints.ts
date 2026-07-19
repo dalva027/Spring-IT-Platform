@@ -1,6 +1,7 @@
-import { authApi, ticketApi } from './client';
+import { aiApi, authApi, ticketApi } from './client';
 import type {
   AgingReportRow,
+  AnalysisResponse,
   AuthResponse,
   CommentResponse,
   Page,
@@ -95,4 +96,20 @@ export function fetchSlaBreaches(): Promise<TicketResponse[]> {
 
 export function fetchAgingReport(): Promise<AgingReportRow[]> {
   return ticketApi.get<AgingReportRow[]>('/api/tickets/reports/aging');
+}
+
+// ---- ai-service ----
+
+/** Fire-and-forget background analysis of a freshly created ticket. */
+export function analyzeTicket(ticketId: number): Promise<{ requestId: string; status: string }> {
+  return aiApi.post(`/api/analyze/tickets/${ticketId}`);
+}
+
+export function fetchAnalysisByTicket(ticketId: number): Promise<AnalysisResponse> {
+  return aiApi.get<AnalysisResponse>(`/api/analyses/by-ticket/${ticketId}`);
+}
+
+/** "Create ticket anyway" — resumes a SOLVED assistant run through the API agent. */
+export function createTicketFromAssist(requestId: string): Promise<AnalysisResponse> {
+  return aiApi.post<AnalysisResponse>(`/api/assist/${requestId}/create-ticket`);
 }

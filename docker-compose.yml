@@ -1,6 +1,10 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    # pgvector/pgvector:pg16 keeps the same PG16 on-disk format, so an existing
+    # pgdata volume survives the image swap. On an existing volume the init
+    # scripts do NOT re-run — see README "AI service bootstrap" for the one-time
+    # ai_db creation command.
+    image: pgvector/pgvector:pg16
     container_name: helpdesk-postgres
     environment:
       POSTGRES_USER: helpdesk
@@ -54,6 +58,45 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: helpdesk-mailhog
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+
+  ai-service:
+    build: ./ai-service
+    container_name: helpdesk-ai-service
+    ports:
+      - "8083:8083"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://helpdesk:helpdesk@postgres:5432/ai_db
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-please-32-bytes-min!}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      TICKET_API_URL: http://ticket-service:8082
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
+      SMTP_HOST: mailhog
+      SMTP_PORT: "1025"
+      AI_AGENT_USER_ID: "9000"
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      KNOWLEDGE_BASE_DIR: /knowledge-base
+    volumes:
+      - ./knowledge-base:/knowledge-base:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ticket-service:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8083/healthz')\""]
       interval: 10s
       timeout: 5s
       retries: 10
