@@ -4,6 +4,9 @@ import type {
   AnalysisResponse,
   AuthResponse,
   CommentResponse,
+  Contact,
+  MessageBox,
+  MessageResponse,
   Page,
   Role,
   StatusHistoryResponse,
@@ -31,6 +34,11 @@ export function fetchUsers(): Promise<UserResponse[]> {
   return authApi.get<UserResponse[]>('/api/users');
 }
 
+/** Directory usable by any authenticated user (requesters included) for the message recipient picker. */
+export function fetchContacts(): Promise<Contact[]> {
+  return authApi.get<Contact[]>('/api/users/contacts');
+}
+
 export function updateUserRole(userId: number, role: Role): Promise<UserResponse> {
   return authApi.patch<UserResponse>(`/api/users/${userId}/role`, { role });
 }
@@ -41,6 +49,8 @@ export interface TicketSearchParams {
   status?: TicketStatus;
   priority?: TicketPriority;
   assigneeId?: number;
+  /** Restrict to tickets with no assignee — the inbox / triage queue. */
+  unassigned?: boolean;
   page?: number;
   size?: number;
   sort?: string;
@@ -51,6 +61,7 @@ export function searchTickets(params: TicketSearchParams): Promise<Page<TicketRe
   if (params.status) query.set('status', params.status);
   if (params.priority) query.set('priority', params.priority);
   if (params.assigneeId !== undefined) query.set('assigneeId', String(params.assigneeId));
+  if (params.unassigned) query.set('unassigned', 'true');
   if (params.page !== undefined) query.set('page', String(params.page));
   if (params.size !== undefined) query.set('size', String(params.size));
   if (params.sort) query.set('sort', params.sort);
@@ -96,6 +107,33 @@ export function fetchSlaBreaches(): Promise<TicketResponse[]> {
 
 export function fetchAgingReport(): Promise<AgingReportRow[]> {
   return ticketApi.get<AgingReportRow[]>('/api/tickets/reports/aging');
+}
+
+// ---- ticket-service: internal messaging ----
+
+export interface SendMessagePayload {
+  recipientId: number;
+  subject: string;
+  body: string;
+  ticketId?: number | null;
+  parentId?: number | null;
+}
+
+export function sendMessage(payload: SendMessagePayload): Promise<MessageResponse> {
+  return ticketApi.post<MessageResponse>('/api/messages', payload);
+}
+
+export function fetchMessages(box: MessageBox, page = 0): Promise<Page<MessageResponse>> {
+  const query = new URLSearchParams({ box, page: String(page), size: '20' });
+  return ticketApi.get<Page<MessageResponse>>(`/api/messages?${query.toString()}`);
+}
+
+export function fetchMessageThread(id: number): Promise<MessageResponse[]> {
+  return ticketApi.get<MessageResponse[]>(`/api/messages/${id}/thread`);
+}
+
+export function fetchUnreadCount(): Promise<number> {
+  return ticketApi.get<{ count: number }>('/api/messages/unread-count').then((r) => r.count);
 }
 
 // ---- ai-service ----

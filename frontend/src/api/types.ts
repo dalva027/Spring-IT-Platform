@@ -38,6 +38,29 @@ export interface CommentResponse {
   createdAt: string;
 }
 
+/** Slim user directory entry (no email) for the messaging recipient picker. */
+export interface Contact {
+  id: number;
+  fullName: string;
+  role: Role;
+}
+
+export interface MessageResponse {
+  id: number;
+  senderId: number;
+  recipientId: number;
+  subject: string;
+  body: string;
+  ticketId: number | null;
+  parentId: number | null;
+  rootId: number | null;
+  read: boolean;
+  createdAt: string;
+  readAt: string | null;
+}
+
+export type MessageBox = 'inbox' | 'sent';
+
 export interface StatusHistoryResponse {
   id: number;
   fromStatus: TicketStatus | null;

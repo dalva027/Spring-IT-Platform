@@ -109,7 +109,7 @@ export function AssistantPage() {
         </label>
         <div className="form-actions">
           <button type="submit" className="btn-primary" disabled={phase === 'running'}>
-            {phase === 'running' ? 'Agents working…' : 'Ask the AI helpdesk'}
+            {phase === 'running' ? 'Agents working…' : 'Ask floIT'}
           </button>
         </div>
       </form>

@@ -26,6 +26,11 @@ public final class TicketSpecifications {
         return (root, query, cb) -> assigneeId == null ? cb.conjunction() : cb.equal(root.get("assigneeId"), assigneeId);
     }
 
+    /** Matches tickets with no assignee — the triage "inbox" queue. A false flag is a no-op. */
+    public static Specification<Ticket> isUnassigned(boolean unassigned) {
+        return (root, query, cb) -> unassigned ? cb.isNull(root.get("assigneeId")) : cb.conjunction();
+    }
+
     public static Specification<Ticket> hasRequester(Long requesterId) {
         return (root, query, cb) -> cb.equal(root.get("requesterId"), requesterId);
     }

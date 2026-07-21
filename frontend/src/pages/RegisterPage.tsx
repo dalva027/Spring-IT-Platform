@@ -35,7 +35,7 @@ export function RegisterPage() {
       </div>
       <form className="auth-card" onSubmit={handleSubmit}>
         <h1>
-          <span className="brand-mark" aria-hidden="true" /> Helpdesk
+          <span className="brand-mark" aria-hidden="true" /> floIT
         </h1>
         <p className="auth-subtitle">Create an account</p>
         {error && <ErrorMessage message={error} />}

@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.helpdesk.ticket.exception.InvalidStatusTransitionException;
+import com.helpdesk.ticket.exception.MessageNotFoundException;
 import com.helpdesk.ticket.exception.TicketNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -40,9 +41,14 @@ public class ApiExceptionHandler {
                 HttpStatus.BAD_REQUEST, "Invalid value for parameter '%s'".formatted(ex.getName()));
     }
 
-    @ExceptionHandler(TicketNotFoundException.class)
-    public ProblemDetail handleNotFound(TicketNotFoundException ex) {
+    @ExceptionHandler({TicketNotFoundException.class, MessageNotFoundException.class})
+    public ProblemDetail handleNotFound(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ProblemDetail handleIllegalArgument(IllegalArgumentException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(InvalidStatusTransitionException.class)

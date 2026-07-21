@@ -54,9 +54,10 @@ public class TicketController {
             @RequestParam(required = false) TicketStatus status,
             @RequestParam(required = false) TicketPriority priority,
             @RequestParam(required = false) Long assigneeId,
+            @RequestParam(required = false, defaultValue = "false") boolean unassigned,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal AuthenticatedUser user) {
-        return ticketService.search(status, priority, assigneeId, pageable, user);
+        return ticketService.search(status, priority, assigneeId, unassigned, pageable, user);
     }
 
     @GetMapping("/{id}")

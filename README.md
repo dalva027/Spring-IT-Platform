@@ -1,9 +1,23 @@
-# Helpdesk — IT Ticketing Platform
+# floIT — IT Ticketing Platform
 
 An IT helpdesk / ticketing platform built as two independently deployable Spring Boot microservices,
 backed by PostgreSQL and designed to sit behind a React front end. It covers the full lifecycle of an
 IT support ticket: intake, prioritization with SLA deadlines, assignment, status transitions with a
-full audit trail, comments, and operational reports (SLA breaches, ticket aging).
+full audit trail, comments, operational reports (SLA breaches, ticket aging), and internal
+user-to-user messaging.
+
+## Screenshots
+
+The React SPA (branded **floIT**) is a role-aware single-page app: requesters see their own tickets
+and can message the team; agents and admins get the full queue, triage filters (unassigned / assigned
+to me), reports, and user management.
+
+|  |  |
+|---|---|
+| **Ticket queue** — filter by status, priority and assignment, with live SLA countdowns<br><img src="docs/images/02-tickets.png" width="430"> | **Ticket detail** — description, comments, status history, SLA and agent actions<br><img src="docs/images/03-ticket-detail.png" width="430"> |
+| **Internal messaging** — threaded direct messages between users, optionally linked to a ticket<br><img src="docs/images/04-inbox.png" width="430"> | **AI assistant** — describe a problem in plain language and a multi-agent pipeline triages it<br><img src="docs/images/05-assistant.png" width="430"> |
+| **Reports** — ticket aging and a live SLA-breach table<br><img src="docs/images/06-reports.png" width="430"> | **User management** — admins manage roles across the directory<br><img src="docs/images/07-users.png" width="430"> |
+| **Sign in** — stateless JWT auth with a light/dark theme<br><img src="docs/images/01-login.png" width="430"> |  |
 
 ## Architecture
 
@@ -98,7 +112,8 @@ Optional extras:
 | POST | `/api/auth/register` | public | Register (role defaults to `REQUESTER`), returns JWT |
 | POST | `/api/auth/login` | public | Login, returns JWT |
 | GET | `/api/users/me` | authenticated | Current user profile |
-| GET | `/api/users` | AGENT, ADMIN | List users |
+| GET | `/api/users` | AGENT, ADMIN | List users (full profile incl. email) |
+| GET | `/api/users/contacts` | authenticated | Slim directory (id/name/role, no email) for the messaging recipient picker |
 | PATCH | `/api/users/{id}/role` | ADMIN | Change a user's role |
 
 ### ticket-service (:8082)
@@ -106,7 +121,7 @@ Optional extras:
 | Method | Path | Access | Description |
 |---|---|---|---|
 | POST | `/api/tickets` | authenticated | Create ticket (SLA deadline derived from priority) |
-| GET | `/api/tickets` | authenticated* | Search: `status`, `priority`, `assigneeId` + paging/sorting |
+| GET | `/api/tickets` | authenticated* | Search: `status`, `priority`, `assigneeId`, `unassigned` + paging/sorting |
 | GET | `/api/tickets/{id}` | authenticated* | Ticket details |
 | PATCH | `/api/tickets/{id}/status` | AGENT, ADMIN | Transition status (validated state machine) |
 | PATCH | `/api/tickets/{id}/assignee` | AGENT, ADMIN | Assign ticket |
@@ -117,6 +132,20 @@ Optional extras:
 | GET | `/api/tickets/reports/aging` | AGENT, ADMIN | Ticket count + oldest age per status |
 
 \* Requesters only see their own tickets; agents and admins see everything.
+
+#### Internal messaging (ticket-service)
+
+Direct user-to-user messages, optionally linked to a ticket. Replies thread by a shared root, so a
+whole conversation is fetched in one call. A message is readable only by its sender or recipient.
+
+| Method | Path | Access | Description |
+|---|---|---|---|
+| POST | `/api/messages` | authenticated | Send a message (`recipientId`, `subject`, `body`, optional `ticketId` / `parentId` for a reply) |
+| GET | `/api/messages?box=inbox\|sent` | authenticated | List received (default) or sent messages, paged |
+| GET | `/api/messages/{id}` | participant | Read a message (marks it read for the recipient) |
+| GET | `/api/messages/{id}/thread` | participant | Full conversation thread, oldest first |
+| PATCH | `/api/messages/{id}/read` | recipient | Mark a message read |
+| GET | `/api/messages/unread-count` | authenticated | Unread count (drives the sidebar badge) |
 
 ### ai-service (:8083)
 

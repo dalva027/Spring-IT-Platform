@@ -70,11 +70,12 @@ public class TicketService {
 
     @Transactional(readOnly = true)
     public Page<TicketResponse> search(TicketStatus status, TicketPriority priority, Long assigneeId,
-                                       Pageable pageable, AuthenticatedUser user) {
+                                       boolean unassigned, Pageable pageable, AuthenticatedUser user) {
         Specification<Ticket> spec = Specification.allOf(
                 TicketSpecifications.hasStatus(status),
                 TicketSpecifications.hasPriority(priority),
-                TicketSpecifications.hasAssignee(assigneeId));
+                TicketSpecifications.hasAssignee(assigneeId),
+                TicketSpecifications.isUnassigned(unassigned));
         if (user.isRequester()) {
             spec = spec.and(TicketSpecifications.hasRequester(user.id()));
         }

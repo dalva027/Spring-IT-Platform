@@ -21,6 +21,7 @@ export function TicketsPage() {
   const status = (searchParams.get('status') as TicketStatus | null) ?? undefined;
   const priority = (searchParams.get('priority') as TicketPriority | null) ?? undefined;
   const mine = searchParams.get('mine') === '1';
+  const unassigned = searchParams.get('unassigned') === '1';
   const page = Number(searchParams.get('page') ?? '0');
 
   useEffect(() => {
@@ -30,7 +31,9 @@ export function TicketsPage() {
     searchTickets({
       status,
       priority,
-      assigneeId: mine && user ? user.id : undefined,
+      // "Unassigned" and "assigned to me" are mutually exclusive queues.
+      assigneeId: mine && !unassigned && user ? user.id : undefined,
+      unassigned,
       page,
       size: 20,
       sort: 'createdAt,desc',
@@ -47,7 +50,17 @@ export function TicketsPage() {
     return () => {
       cancelled = true;
     };
-  }, [status, priority, mine, page, user]);
+  }, [status, priority, mine, unassigned, page, user]);
+
+  function toggleQueue(key: 'mine' | 'unassigned', on: boolean) {
+    const next = new URLSearchParams(searchParams);
+    // The two queue filters are mutually exclusive.
+    next.delete('mine');
+    next.delete('unassigned');
+    if (on) next.set(key, '1');
+    next.delete('page');
+    setSearchParams(next);
+  }
 
   function updateParam(key: string, value: string) {
     const next = new URLSearchParams(searchParams);
@@ -73,7 +86,7 @@ export function TicketsPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>Tickets</h1>
+        <h1>{mine ? 'My Tickets' : unassigned ? 'Unassigned' : 'Tickets'}</h1>
         <Link to="/tickets/new" className="btn-primary btn-accent">
           + New ticket
         </Link>
@@ -103,21 +116,37 @@ export function TicketsPage() {
           </select>
         </label>
         {isAgent && (
-          <label className="filter-checkbox">
-            <input
-              type="checkbox"
-              checked={mine}
-              onChange={(e) => updateParam('mine', e.target.checked ? '1' : '')}
-            />
-            Assigned to me
-          </label>
+          <>
+            <label className="filter-checkbox">
+              <input
+                type="checkbox"
+                checked={mine}
+                onChange={(e) => toggleQueue('mine', e.target.checked)}
+              />
+              Assigned to me
+            </label>
+            <label className="filter-checkbox">
+              <input
+                type="checkbox"
+                checked={unassigned}
+                onChange={(e) => toggleQueue('unassigned', e.target.checked)}
+              />
+              Unassigned
+            </label>
+          </>
         )}
       </div>
 
       {loading && <Spinner label="Loading tickets…" />}
       {error && <ErrorMessage message={error} />}
       {!loading && !error && result && result.content.length === 0 && (
-        <EmptyState message="No tickets match these filters." />
+        <EmptyState
+          message={
+            unassigned
+              ? 'No unassigned tickets — every ticket has an owner.'
+              : 'No tickets match these filters.'
+          }
+        />
       )}
 
       {!loading && !error && result && result.content.length > 0 && (

@@ -5,7 +5,9 @@ import { ThemeProvider } from './theme/ThemeContext';
 import { UserDirectoryProvider } from './auth/UserDirectoryContext';
 import { Layout } from './components/Layout';
 import { Spinner } from './components/feedback';
+import { MessagesProvider } from './messages/MessagesContext';
 import { AssistantPage } from './pages/AssistantPage';
+import { InboxPage } from './pages/InboxPage';
 import { LoginPage } from './pages/LoginPage';
 import { NewTicketPage } from './pages/NewTicketPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -62,11 +64,14 @@ export default function App() {
             <Route
               element={
                 <UserDirectoryProvider>
-                  <Layout />
+                  <MessagesProvider>
+                    <Layout />
+                  </MessagesProvider>
                 </UserDirectoryProvider>
               }
             >
               <Route path="/" element={<Navigate to="/tickets" replace />} />
+              <Route path="/inbox" element={<InboxPage />} />
               <Route path="/assist" element={<AssistantPage />} />
               <Route path="/tickets" element={<TicketsPage />} />
               <Route path="/tickets/new" element={<NewTicketPage />} />
